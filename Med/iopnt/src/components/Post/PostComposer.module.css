@@ -1,0 +1,113 @@
+.container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.textarea {
+    width: 100%;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+    font-size: 15px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    transition: all 0.2s ease;
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    min-height: 80px;
+}
+
+.textarea::placeholder {
+    color: var(--text-tertiary);
+}
+
+.textarea:focus {
+    border-color: var(--accent-blue);
+    background: var(--bg-secondary);
+}
+
+.expanded {
+    margin-top: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.linkInput {
+    width: 100%;
+    padding: var(--space-3);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.linkInput:focus {
+    border-color: var(--accent-blue);
+}
+
+.linkInput::placeholder {
+    color: var(--text-tertiary);
+}
+
+.actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+}
+
+.buttons {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.cancel,
+.submit {
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.cancel {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+}
+
+.cancel:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.submit {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.submit:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

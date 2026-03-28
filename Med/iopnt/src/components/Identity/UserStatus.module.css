@@ -1,0 +1,57 @@
+.container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    width: fit-content;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-family: var(--font-geist-mono);
+    font-size: 14px;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+}
+
+.label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--foreground-muted);
+    letter-spacing: 0.05em;
+}
+
+.name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.reroll {
+    background: transparent;
+    border: none;
+    color: var(--foreground-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+}
+
+.reroll:hover {
+    color: var(--primary);
+    background: var(--surface-highlight);
+}

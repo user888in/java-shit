@@ -1,0 +1,394 @@
+📄 Product Requirements Document (PRD)
+Product Name (Working)
+
+BillRx
+(Tagline: “Understand your medical bills. Don’t overpay.”)
+
+1. Product Overview
+Problem Statement
+
+Medical bills are:
+
+Confusing, non-transparent, and error-prone
+
+Frequently incorrect (duplicate charges, miscoding, out-of-network errors)
+
+Stressful for patients, who lack the expertise to audit them
+
+Most consumers:
+
+Do not understand CPT/ICD codes
+
+Do not know their rights
+
+Do not have time to call providers
+
+As a result, people overpay thousands of dollars unnecessarily.
+
+Solution
+
+A self-serve B2C SaaS that:
+
+Accepts medical bills (PDF/photo)
+
+Automatically audits them for common billing errors
+
+Explains issues in plain English
+
+Generates ready-to-send dispute letters
+
+Tracks resolution status
+
+⚠️ No diagnosis. No treatment advice. No medical decisions.
+
+2. Goals & Success Metrics
+Primary Goals
+
+Help users save money
+
+Reduce cognitive & emotional stress
+
+Require minimal ongoing founder involvement
+
+Success Metrics (KPIs)
+
+% of bills flagged with at least one issue
+
+Average savings per user
+
+Conversion rate (upload → pay)
+
+Refund/adjustment success rate
+
+Monthly churn < 5%
+
+3. Target User Personas
+Persona 1: Insured Working Adult (Primary)
+
+Age: 25–55
+
+Receives unexpected bills after care
+
+Has insurance but doesn’t understand EOBs
+
+Will pay to avoid calling billing departments
+
+Persona 2: Parent / Caregiver
+
+Manages bills for family
+
+High stress, high urgency
+
+Strong word-of-mouth potential
+
+Persona 3: Chronic Care Patient
+
+Frequent bills
+
+Repeated exposure = high LTV
+
+4. User Journey (End-to-End)
+
+Landing page: “We help you spot medical billing errors”
+
+Upload bill (no account required initially)
+
+System scans & analyzes bill
+
+Preview: “We found X potential issues”
+
+Paywall
+
+Full report + dispute letter download
+
+Optional account creation to track status
+
+5. Core Features (MVP)
+5.1 Bill Upload & Intake
+
+Requirements
+
+Accept:
+
+PDF
+
+JPG / PNG (camera photos)
+
+Max size: 10 MB
+
+Multi-page support
+
+UX
+
+Drag & drop
+
+Mobile-friendly
+
+Progress indicator
+
+5.2 Document Parsing & Data Extraction
+
+Extract:
+
+Provider name
+
+Date of service
+
+CPT / HCPCS codes
+
+ICD codes (if present)
+
+Charge amount
+
+Insurance adjustments
+
+Patient responsibility
+
+Provider network status (if available)
+
+Technical Notes
+
+OCR + structured parsing
+
+Confidence scoring per extracted field
+
+5.3 Error Detection Engine (CORE VALUE)
+
+The system flags potential issues, not definitive claims.
+
+Error Categories
+
+Duplicate Charges
+
+Same CPT + same date + same provider
+
+Upcoding
+
+CPT code inconsistent with visit type (e.g. high-level ER for routine visit)
+
+Unbundling
+
+Procedures billed separately that should be bundled
+
+Out-of-Network Misbilling
+
+Provider listed as out-of-network when facility is in-network
+
+Balance Billing (Illegal in many cases)
+
+Charges beyond allowed amounts
+
+Missing Insurance Adjustments
+
+Insurance paid nothing when expected
+
+Excessive Pricing
+
+Charges far above regional averages
+
+5.4 Plain-English Explanation Layer
+
+For each flagged issue:
+
+What this means
+
+Why it might be wrong
+
+How common it is
+
+What the user can do next
+
+Tone
+
+Calm
+
+Non-alarmist
+
+Non-diagnostic
+
+5.5 Dispute Letter Generator (AUTOMATION)
+
+Auto-generate:
+
+Provider dispute letter
+
+Insurance appeal letter
+
+Includes
+
+User info
+
+Bill reference
+
+Specific codes in question
+
+Polite, professional language
+
+Legal references (where applicable)
+
+Formats
+
+PDF
+
+Copyable text
+
+Email version
+
+5.6 User Dashboard (Post-Payment)
+
+Uploaded bills
+
+Flagged issues
+
+Dispute status:
+
+Not sent
+
+Sent
+
+Adjusted
+
+Resolved
+
+Savings tracker (“You saved $X”)
+
+6. Non-Goals (Very Important)
+
+Explicitly excluded:
+
+Medical advice
+
+Diagnosis
+
+Treatment recommendations
+
+Talking to providers on behalf of user
+
+Phone support
+
+This keeps:
+
+Legal risk low
+
+Support load minimal
+
+Scope manageable
+
+7. Monetization
+Option A: Pay-Per-Bill (Recommended for MVP)
+
+$29 per bill
+
+$49 for complex bills
+
+Option B: Subscription
+
+$10/month
+
+Includes X bills/month
+
+Upsells (Later)
+
+“We handle disputes for you” (partner-based)
+
+Family plan
+
+8. Legal & Compliance
+Positioning
+
+Educational & administrative assistance tool
+
+Not a medical service
+
+Not a legal service
+
+Required Disclaimers
+
+“This is not medical advice”
+
+“Potential issues only”
+
+“Verify with provider/insurer”
+
+HIPAA Strategy
+
+Minimal PHI storage
+
+Auto-delete files after analysis (default 30 days)
+
+Encryption at rest & in transit
+
+9. Security & Privacy
+
+TLS encryption
+
+Encrypted storage
+
+Role-based access
+
+Automatic data purging
+
+No data resale
+
+10. Tech Stack (Solo-Friendly)
+
+Frontend
+
+Next.js / React
+
+Tailwind
+
+Backend
+
+Node.js or Python (FastAPI)
+
+REST API
+
+OCR
+
+Cloud OCR service
+
+Database
+
+PostgreSQL
+
+Auth
+
+Passwordless login (email magic link)
+
+Payments
+
+Stripe
+
+11. Automation & Low-Involvement Design
+
+No manual reviews
+
+No chat support
+
+Guided UX instead of humans
+
+Knowledge base for FAQs
+
+Email-only support (async)
+
+12. Analytics & Logging
+
+Track:
+
+Upload → pay conversion
+
+Error types frequency
+
+Average savings
+
+Dispute success rate
+
+Drop-off points
+
+13. Risks & Mitigations
+Risk	Mitigation
+Legal exposure	Clear disclaimers, no advice
+OCR inaccuracies	Confidence thresholds
+User distrust	Transparency + examples
+Support overload	Limit edge cases

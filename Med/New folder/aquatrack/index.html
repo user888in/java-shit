@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  
+  <!-- SEO Meta Tags -->
+  <title>AquaTrack - Hydration & Routine Buddy</title>
+  <meta name="description" content="Track your daily water intake, exercise, and standing breaks with smart adaptive reminders. Stay healthy and hydrated!">
+  <meta name="keywords" content="hydration, water tracker, health, fitness, routine, reminders">
+  <meta name="author" content="AquaTrack">
+  
+  <!-- Open Graph / Social Media -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AquaTrack - Hydration & Routine Buddy">
+  <meta property="og:description" content="Track your daily water intake, exercise, and standing breaks with smart adaptive reminders.">
+  <meta property="og:image" content="/assets/icons/icon-512.png">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="AquaTrack">
+  <meta name="twitter:description" content="Stay hydrated and healthy with AquaTrack">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#00d4ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AquaTrack">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-180.png">
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/icon-16.png">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Skip to main content (accessibility) -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  
+  <!-- ARIA Live Region for announcements -->
+  <div id="aria-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  
+  <!-- Loading Overlay -->
+  <div class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p>Loading AquaTrack...</p>
+  </div>
+  
+  <!-- Main App Container -->
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <h1 class="app-title">
+        <span class="app-icon">💧</span>
+        AquaTrack
+      </h1>
+      <button id="settings-btn" class="icon-btn" aria-label="Settings">
+        <span>⚙️</span>
+      </button>
+    </header>
+    
+    <!-- Main Content -->
+    <main id="main-content" class="main-content">
+      <!-- Water Intake Section -->
+      <section class="water-section" aria-labelledby="water-heading">
+        <h2 id="water-heading" class="section-title">Water Intake</h2>
+        
+        <!-- Progress Circle -->
+        <div class="progress-container">
+          <svg class="progress-circle" viewBox="0 0 200 200" aria-hidden="true">
+            <circle class="progress-circle-bg" cx="100" cy="100" r="90"></circle>
+            <circle class="progress-circle-fill" cx="100" cy="100" r="90"></circle>
+          </svg>
+          <div class="progress-content">
+            <div class="progress-text" aria-live="polite">0%</div>
+            <div class="progress-amounts">
+              <span class="current-amount">0ml</span>
+              <span class="separator">/</span>
+              <span class="goal-amount">2000ml</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Quick Add Buttons -->
+        <div class="quick-add-container">
+          <button class="quick-add-btn" data-amount="250" aria-label="Add 250 milliliters">
+            +250ml
+          </button>
+          <button class="quick-add-btn" data-amount="500" aria-label="Add 500 milliliters">
+            +500ml
+          </button>
+          <button class="quick-add-btn" data-amount="1000" aria-label="Add 1 liter">
+            +1L
+          </button>
+        </div>
+        
+        <!-- Custom Amount -->
+        <div class="custom-add-container">
+          <input 
+            type="number" 
+            id="custom-water-input" 
+            class="custom-input" 
+            placeholder="Custom amount (ml)" 
+            min="50" 
+            max="2000"
+            aria-label="Custom water amount in milliliters"
+          >
+          <button id="custom-water-btn" class="btn btn-primary">Add</button>
+          <button id="undo-btn" class="btn btn-secondary" aria-label="Undo last entry">Undo</button>
+        </div>
+      </section>
+      
+      <!-- Exercise Section -->
+      <section class="exercise-section" aria-labelledby="exercise-heading">
+        <h2 id="exercise-heading" class="section-title">Exercise & Movement</h2>
+        
+        <form id="exercise-form" class="exercise-form">
+          <div class="form-group">
+            <label for="exercise-type">Type</label>
+            <input 
+              type="text" 
+              id="exercise-type" 
+              class="form-input" 
+              placeholder="e.g., Walking, Yoga" 
+              required
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="exercise-duration">Duration (minutes)</label>
+            <input 
+              type="number" 
+              id="exercise-duration" 
+              class="form-input" 
+              placeholder="15" 
+              min="1" 
+              max="300" 
+              required
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="exercise-notes">Notes (optional)</label>
+            <input 
+              type="text" 
+              id="exercise-notes" 
+              class="form-input" 
+              placeholder="How did it feel?"
+            >
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Log Exercise</button>
+        </form>
+        
+        <!-- Exercise List -->
+        <div class="exercise-list">
+          <p class="empty-state">No exercises logged today</p>
+        </div>
+      </section>
+      
+      <!-- Standing Breaks Section -->
+      <section class="standing-section" aria-labelledby="standing-heading">
+        <h2 id="standing-heading" class="section-title">Standing Breaks</h2>
+        <p class="section-description">Take regular breaks to stand and stretch</p>
+        <button id="standing-break-btn" class="btn btn-primary">Log Standing Break</button>
+        <div class="stat-display">
+          <span class="stat-label">Today:</span>
+          <span class="stat-standing">0</span>
+          <span class="stat-unit">breaks</span>
+        </div>
+      </section>
+      
+      <!-- Daily Summary Section -->
+      <section class="summary-section" aria-labelledby="summary-heading">
+        <h2 id="summary-heading" class="section-title">Daily Summary</h2>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">💧</div>
+            <div class="stat-value stat-water">0ml</div>
+            <div class="stat-label">Water</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">🏃</div>
+            <div class="stat-value stat-exercise">0</div>
+            <div class="stat-label">Exercises</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">🧍</div>
+            <div class="stat-value stat-standing">0</div>
+            <div class="stat-label">Breaks</div>
+          </div>
+        </div>
+        
+        <!-- Streaks -->
+        <div class="streaks-container">
+          <h3 class="subsection-title">Streaks 🔥</h3>
+          <div class="streak-item">
+            <span class="streak-label">Water:</span>
+            <span class="streak-water">0 days</span>
+          </div>
+          <div class="streak-item">
+            <span class="streak-label">Exercise:</span>
+            <span class="streak-exercise">0 days</span>
+          </div>
+        </div>
+        
+        <!-- Insights -->
+        <div class="insights-section">
+          <h3 class="subsection-title">Insights</h3>
+          <div class="insights-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal" role="dialog" aria-labelledby="settings-modal-title" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="settings-modal-title">Settings</h2>
+        <button class="modal-close" aria-label="Close settings">&times;</button>
+      </div>
+      
+      <form id="settings-form" class="modal-body">
+        <div class="form-group">
+          <label for="waterGoal">Daily Water Goal (ml)</label>
+          <input type="number" id="waterGoal" name="waterGoal" class="form-input" value="2000" min="500" max="5000" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="wakeTime">Wake Time</label>
+          <input type="time" id="wakeTime" name="wakeTime" class="form-input" value="07:00" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="sleepTime">Sleep Time</label>
+          <input type="time" id="sleepTime" name="sleepTime" class="form-input" value="23:00" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="reminderFrequency">Reminder Frequency (minutes)</label>
+          <input type="number" id="reminderFrequency" name="reminderFrequency" class="form-input" value="60" min="15" max="240" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="standingInterval">Standing Reminder Interval (minutes)</label>
+          <input type="number" id="standingInterval" name="standingInterval" class="form-input" value="30" min="15" max="120" required>
+        </div>
+        
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" name="notificationsEnabled" checked>
+            <span>Enable Notifications</span>
+          </label>
+        </div>
+        
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" name="soundEnabled">
+            <span>Enable Sounds</span>
+          </label>
+        </div>
+        
+        <div class="form-group">
+          <button type="button" id="enable-notifications-btn" class="btn btn-secondary">Request Notification Permission</button>
+        </div>
+        
+        <div class="form-group">
+          <h3>Data Management</h3>
+          <button type="button" id="export-data-btn" class="btn btn-secondary">Export Data</button>
+          <button type="button" id="import-data-btn" class="btn btn-secondary">Import Data</button>
+          <input type="file" id="import-data-input" accept=".json" style="display: none;">
+        </div>
+        
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Onboarding Modal -->
+  <div id="onboarding-modal" class="modal" role="dialog" aria-labelledby="onboarding-modal-title" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="onboarding-modal-title">Welcome to AquaTrack! 💧</h2>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Step 1 -->
+        <div class="onboarding-step">
+          <h3>Let's get you started!</h3>
+          <p>AquaTrack helps you stay hydrated and maintain healthy habits with smart reminders.</p>
+          <div class="onboarding-features">
+            <div class="feature-item">
+              <span class="feature-icon">💧</span>
+              <span>Track water intake</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">🏃</span>
+              <span>Log exercises</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">🔔</span>
+              <span>Smart reminders</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Step 2 -->
+        <div class="onboarding-step" style="display: none;">
+          <h3>Set Your Daily Goal</h3>
+          <div class="form-group">
+            <label for="onboarding-water-goal">Daily Water Goal (ml)</label>
+            <input type="number" id="onboarding-water-goal" class="form-input" value="2000" min="500" max="5000">
+            <small>Recommended: 2000ml (2 liters) per day</small>
+          </div>
+        </div>
+        
+        <!-- Step 3 -->
+        <div class="onboarding-step" style="display: none;">
+          <h3>Your Schedule</h3>
+          <div class="form-group">
+            <label for="onboarding-wake-time">Wake Time</label>
+            <input type="time" id="onboarding-wake-time" class="form-input" value="07:00">
+          </div>
+          <div class="form-group">
+            <label for="onboarding-sleep-time">Sleep Time</label>
+            <input type="time" id="onboarding-sleep-time" class="form-input" value="23:00">
+          </div>
+          <small>We'll send reminders only during your waking hours</small>
+        </div>
+        
+        <!-- Step 4 -->
+        <div class="onboarding-step" style="display: none;">
+          <h3>Enable Notifications</h3>
+          <p>Get gentle reminders to stay hydrated throughout the day.</p>
+          <p><strong>We'll ask for permission on the next screen.</strong></p>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button id="onboarding-prev" class="btn btn-secondary" style="display: none;">Previous</button>
+        <button id="onboarding-next" class="btn btn-primary">Next</button>
+        <button id="onboarding-finish" class="btn btn-primary" style="display: none;">Get Started!</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Noscript Fallback -->
+  <noscript>
+    <div class="noscript-message">
+      <h1>JavaScript Required</h1>
+      <p>AquaTrack requires JavaScript to function. Please enable JavaScript in your browser settings.</p>
+    </div>
+  </noscript>
+  
+  <!-- Scripts -->
+  <script src="/js/config.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/errors.js"></script>
+  <script src="/js/storage.js"></script>
+  <script src="/js/analytics.js"></script>
+  <script src="/js/reminders.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
