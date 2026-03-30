@@ -14,7 +14,7 @@ public record OrderResponse(Long id, UserResponse user, List<OrderItemResponse> 
                 order.getItems().stream().map(OrderItemResponse::from).toList(),
                 order.getTotalPrice(),
                 order.getStatus().name(),
-                order.getDeliveryAddress(),
+                order.getDeliveryAddressSnapshot(),
                 order.getCreatedAt());
     }
 

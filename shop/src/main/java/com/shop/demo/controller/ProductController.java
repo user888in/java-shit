@@ -34,12 +34,13 @@ public class ProductController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) Boolean inStock,
+            @RequestParam(required = false) Long categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir
     ) {
         return ResponseEntity.ok(
-                productService.searchProducts(search, minPrice, maxPrice, inStock, page, size, sortBy, sortDir));
+                productService.searchProducts(search, minPrice, maxPrice, inStock, categoryId, page, size, sortBy, sortDir));
     }
 }

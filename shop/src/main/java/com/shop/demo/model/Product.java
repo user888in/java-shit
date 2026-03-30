@@ -24,6 +24,12 @@ public class Product {
     @Column(nullable = false)
     private Integer stockQuantity;
 
+    private String imageUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     public Product(String name, BigDecimal price, Integer stockQuantity) {
         this.name = name;
         this.price = price;

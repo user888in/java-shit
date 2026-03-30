@@ -1,9 +1,6 @@
 package com.shop.demo.service;
 
-import com.shop.demo.dto.CreateOrderRequest;
-import com.shop.demo.dto.OrderItemRequest;
-import com.shop.demo.dto.OrderResponse;
-import com.shop.demo.dto.PageResponse;
+import com.shop.demo.dto.*;
 import com.shop.demo.exception.BadRequestException;
 import com.shop.demo.exception.ResourceNotFoundException;
 import com.shop.demo.model.*;
@@ -27,11 +24,17 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request, User currentUser) {
+        if (request.address() == null) {
+            throw new BadRequestException("Delivery Address is required");
+        }
         if (request.items() == null || request.items().isEmpty()) {
             throw new BadRequestException("Order should have at least one item");
         }
         Order order = new Order(currentUser, BigDecimal.ZERO);
-        order.setDeliveryAddress(request.deliveryAddress());
+        order.setDeliveryAddress(request.address());
+
+        AddressResponse snap = AddressResponse.from(request.address());
+        order.setDeliveryAddressSnapshot(snap.toSnapshot());
 
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;

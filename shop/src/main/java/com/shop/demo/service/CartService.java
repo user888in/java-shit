@@ -3,10 +3,7 @@ package com.shop.demo.service;
 import com.shop.demo.dto.*;
 import com.shop.demo.exception.BadRequestException;
 import com.shop.demo.exception.ResourceNotFoundException;
-import com.shop.demo.model.Cart;
-import com.shop.demo.model.CartItem;
-import com.shop.demo.model.Product;
-import com.shop.demo.model.User;
+import com.shop.demo.model.*;
 import com.shop.demo.repository.CartItemRepository;
 import com.shop.demo.repository.CartRepository;
 import com.shop.demo.repository.ProductRepository;
@@ -23,6 +20,7 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final OrderService orderService;
+    private final AddressService addressService;
 
     // get or create cart
     public Cart getOrCreateCart(User user) {
@@ -40,11 +38,12 @@ public class CartService {
             throw new BadRequestException("Quantity should be more than zero");
         }
         Product product = productRepository.findById(request.productId()).orElseThrow(() -> new ResourceNotFoundException("no product found with the id : " + request.productId()));
-        if (product.getStockQuantity() < request.quantity()) {
-            throw new BadRequestException("not enough stock");
-        }
         Cart cart = getOrCreateCart(user);
         var existingItem = cartItemRepository.findByCart_IdAndProduct_Id(cart.getId(), product.getId());
+        int alreadyInCart = existingItem.map(CartItem::getQuantity).orElse(0);
+        if (product.getStockQuantity() < alreadyInCart +  request.quantity()) {
+            throw new BadRequestException("not enough stock");
+        }
         if (existingItem.isPresent()) {
             CartItem cartItem = existingItem.get();
             cartItem.setQuantity(cartItem.getQuantity() + request.quantity());
@@ -90,17 +89,18 @@ public class CartService {
     }
 
     @Transactional
-    public OrderResponse checkout(String deliveryAddress, User user) {
+    public OrderResponse checkout(Long addressId, User user) {
         Cart cart = getOrCreateCart(user);
         if (cart.getItems().isEmpty()) {
             throw new BadRequestException("No items to proceed checkout");
         }
+        Address address = addressService.findAddressEntityById(addressId, user);
         List<OrderItemRequest> orderItems = cart.getItems().stream().map(item -> new OrderItemRequest(
                 item.getProduct().getId(),
                 item.getQuantity()
         )).toList();
         // delegate it to order service
-        CreateOrderRequest orderRequest = new CreateOrderRequest(orderItems, deliveryAddress);
+        CreateOrderRequest orderRequest = new CreateOrderRequest(orderItems, address);
         OrderResponse order = orderService.createOrder(orderRequest, user);
         // clearing cart after creating order
         clearCart(user);

@@ -24,6 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductService {
     private final ProductRepository productRepository;
+    private final CategoryService categoryService;
 
 
     public ProductResponse createProduct(CreateProductRequest request) {
@@ -39,7 +40,12 @@ public class ProductService {
         if (productRepository.existsByName(request.name())) {
             throw new BadRequestException("Product already exists" + request.name());
         }
+
         Product product = new Product(request.name(), BigDecimal.valueOf(request.price()), request.stockQuantity());
+        product.setImageUrl(request.imageUrl());
+        if (request.categoryId() != null) {
+            product.setCategory(categoryService.findCategoryEntityById(request.categoryId()));
+        }
         return ProductResponse.from(productRepository.save(product));
     }
 
@@ -49,14 +55,14 @@ public class ProductService {
     }
 
 
-    public PageResponse<ProductResponse> searchProducts(String search, BigDecimal minPrice, BigDecimal maxPrice, Boolean inStock, int page, int size, String sortBy, String sortDir) {
+    public PageResponse<ProductResponse> searchProducts(String search, BigDecimal minPrice, BigDecimal maxPrice, Boolean inStock, Long categoryId, int page, int size, String sortBy, String sortDir) {
         List<String> allowedSortFields = List.of("name", "price", "stockQuantity");
         if (!allowedSortFields.contains(sortBy)) {
             sortBy = "name"; // default fallback
         }
         Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, Math.min(size, 100), sort);
-        Page<Product> result = productRepository.searchProducts(search, minPrice, maxPrice, inStock, pageable);
+        Page<Product> result = productRepository.searchProducts(search, minPrice, maxPrice, inStock, categoryId, pageable);
         return PageResponse.from(result, ProductResponse::from);
     }
 

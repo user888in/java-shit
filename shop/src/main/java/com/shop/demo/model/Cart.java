@@ -12,7 +12,7 @@ import java.util.List;
 @Table(name = "carts")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"users", "items"})
+@ToString(exclude = {"user", "items"})
 public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

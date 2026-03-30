@@ -32,14 +32,20 @@ public class Order {
     private BigDecimal totalPrice;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private OrderStatus status;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    private String deliveryAddress;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id")
+    private Address deliveryAddress;
 
-    public Order(User user,  BigDecimal totalPrice) {
+    @Column(nullable = false)
+    private String deliveryAddressSnapshot; // in case delivery address is getting deleted
+
+    public Order(User user, BigDecimal totalPrice) {
         this.user = user;
         this.totalPrice = totalPrice;
         this.status = OrderStatus.PENDING;

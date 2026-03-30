@@ -7,11 +7,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 
 import java.math.BigDecimal;
 import java.util.Optional;
 
+@Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByName(String name);
 
@@ -23,12 +25,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             and (:minPrice is null or p.price >= :minPrice) 
             and (:maxPrice is null or p.price <= :maxPrice) 
             and (:inStock is null or (:inStock = true and p.stockQuantity > 0))
+            and (:categoryId is null or p.category.id = :categoryId)
             """)
     Page<Product> searchProducts(
             @Param("search") String search,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             @Param("inStock") Boolean inStock,
+            @Param("categoryId") Long categoryId,
             Pageable pageable
     );
 }

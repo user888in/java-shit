@@ -43,7 +43,7 @@ public class CartController {
     }
 
     @PostMapping("/checkout")
-    public ResponseEntity<OrderResponse> checkout(@RequestParam(required = false) String deliveryAddress, @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(cartService.checkout(deliveryAddress, user));
+    public ResponseEntity<OrderResponse> checkout(@RequestParam Long addressId, @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(cartService.checkout(addressId, user));
     }
 }
