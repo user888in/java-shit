@@ -6,6 +6,7 @@ import com.shop.demo.exception.ResourceNotFoundException;
 import com.shop.demo.model.*;
 import com.shop.demo.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -24,12 +26,9 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request, User currentUser) {
-        if (request.address() == null) {
-            throw new BadRequestException("Delivery Address is required");
-        }
-        if (request.items() == null || request.items().isEmpty()) {
-            throw new BadRequestException("Order should have at least one item");
-        }
+        log.info("Creating order — userId: {}, items: {}",
+                currentUser.getId(), request.items().size());
+
         Order order = new Order(currentUser, BigDecimal.ZERO);
         order.setDeliveryAddress(request.address());
 
@@ -39,9 +38,7 @@ public class OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
         for (OrderItemRequest itemRequest : request.items()) {
-            if (itemRequest.quantity() == null || itemRequest.quantity() <= 0) {
-                throw new BadRequestException("Quantity should be more than 0");
-            }
+            log.debug("Reserving stock - productId: {}, qty: {}", itemRequest.productId(), itemRequest.quantity());
             Product product = productService.reserveStock(itemRequest.productId(), itemRequest.quantity());
             OrderItem item = new OrderItem(
                     order,
@@ -52,8 +49,10 @@ public class OrderService {
         }
         order.setTotalPrice(total);
         order.setItems(orderItems);
+        Order saved = orderRepository.save(order);
+        log.info("Order created - orderId: {}, userId: {}, total: {}", saved.getId(), currentUser.getId(), saved.getTotalPrice());
         // each order will be saved because of CascadeType.ALL
-        return OrderResponse.from(orderRepository.save(order));
+        return OrderResponse.from(saved);
     }
 
     public OrderResponse getOrder(Long orderId, User currentUser) {
@@ -62,12 +61,15 @@ public class OrderService {
     }
 
     public PageResponse<OrderResponse> getMyOrders(User currentUser, int page, int size) {
+        log.info("Fetching orders - userId: {}, page: {}", currentUser.getId(), page);
         var pageable = PageRequest.of(page, Math.min(size, 50), Sort.by("createdAt").descending());
         return PageResponse.from(orderRepository.findByUser_Id(currentUser.getId(), pageable), OrderResponse::from);
     }
 
     @Transactional
     public OrderResponse cancelOrder(Long orderId, User currentUser) {
+        log.info("Cancel request — orderId: {}, userId: {}", orderId, currentUser.getId());
+
         Order order = getOrderAndVerifyOwnership(orderId, currentUser.getId());
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
@@ -75,9 +77,14 @@ public class OrderService {
         }
 
         for (OrderItem item : order.getItems()) {
+            log.debug("Restoring stock — productId: {}, qty: {}",
+                    item.getProductId(), item.getQuantity());
+
             productService.restoreStock(item.getProductId(), item.getQuantity());
         }
         order.setStatus(OrderStatus.CANCELLED);
+        log.info("Order cancelled — orderId: {}", orderId);
+
         return OrderResponse.from(order);
     }
 
@@ -86,6 +93,7 @@ public class OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + orderId));
 
         if (!order.getUser().getId().equals(userId)) {
+            log.warn("Unauthorized order access — orderId: {}, userId: {}", orderId, userId);
             throw new BadRequestException("You can only access your own orders");
         }
 

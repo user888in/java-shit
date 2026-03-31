@@ -7,6 +7,7 @@ import com.shop.demo.exception.ResourceNotFoundException;
 import com.shop.demo.model.Category;
 import com.shop.demo.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
@@ -27,9 +29,6 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse createCategory(CreateCategoryRequest request) {
-        if (request.name() == null || request.name().isBlank()) {
-            throw new BadRequestException("Category name cannot be empty");
-        }
         if (categoryRepository.existsByName(request.name())) {
             throw new BadRequestException("Category Already exists" + request.name());
         }

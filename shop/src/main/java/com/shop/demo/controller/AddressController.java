@@ -4,6 +4,7 @@ import com.shop.demo.dto.AddressResponse;
 import com.shop.demo.dto.CreateAddressRequest;
 import com.shop.demo.model.User;
 import com.shop.demo.service.AddressService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class AddressController {
     }
 
     @PostMapping
-    public ResponseEntity<AddressResponse> addAddress(@RequestBody CreateAddressRequest request, @AuthenticationPrincipal User user) {
+    public ResponseEntity<AddressResponse> addAddress(@Valid @RequestBody CreateAddressRequest request, @AuthenticationPrincipal User user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(addressService.addAddress(request, user));
     }
 

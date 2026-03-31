@@ -9,6 +9,7 @@ import com.shop.demo.exception.ResourceNotFoundException;
 import com.shop.demo.model.User;
 import com.shop.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,20 +18,12 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     @Transactional
     public UserResponse registerUser(RegisterUserRequest request) {
-        if (request.name() == null || request.name().isBlank()) {
-            throw new BadRequestException("Name cannot be blank");
-        }
-        if (request.email() == null || request.email().isBlank()) {
-            throw new BadRequestException("Email cannot be blank");
-        }
-        if (request.password() == null || request.password().length() < 6) {
-            throw new BadRequestException("Password must be at least 6 characters");
-        }
         if (userRepository.existsByEmail(request.email())) {
             throw new BadRequestException("Email already registered :" + request.email());
         }
@@ -55,9 +48,6 @@ public class UserService {
     }
     @Transactional
     public UserResponse updateProfile(UpdateProfileRequest request, User currentUser) {
-        if (request.name() == null || request.name().isBlank()) {
-            throw new BadRequestException("Name cannot be blank");
-        }
         if (request.email() != null && !request.email().equals(currentUser.getEmail())) {
             if (userRepository.existsByEmail(request.email())) {
                 throw new BadRequestException("Email already in use");

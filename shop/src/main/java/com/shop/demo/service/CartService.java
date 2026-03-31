@@ -8,6 +8,7 @@ import com.shop.demo.repository.CartItemRepository;
 import com.shop.demo.repository.CartRepository;
 import com.shop.demo.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
@@ -34,21 +36,24 @@ public class CartService {
 
     @Transactional
     public CartResponse addToCart(AddToCartRequest request, User user) {
-        if (request.quantity() == null || request.quantity() <= 0) {
-            throw new BadRequestException("Quantity should be more than zero");
-        }
+        log.info("Adding to cart — userId: {}, productId: {}, qty: {}",
+                user.getId(), request.productId(), request.quantity());
         Product product = productRepository.findById(request.productId()).orElseThrow(() -> new ResourceNotFoundException("no product found with the id : " + request.productId()));
         Cart cart = getOrCreateCart(user);
         var existingItem = cartItemRepository.findByCart_IdAndProduct_Id(cart.getId(), product.getId());
         int alreadyInCart = existingItem.map(CartItem::getQuantity).orElse(0);
         if (product.getStockQuantity() < alreadyInCart +  request.quantity()) {
+            log.warn("Stock check failed — productId: {}, inCart: {}, requested: {}, available: {}",
+                    request.productId(), alreadyInCart, request.quantity(), product.getStockQuantity());
             throw new BadRequestException("not enough stock");
         }
         if (existingItem.isPresent()) {
             CartItem cartItem = existingItem.get();
             cartItem.setQuantity(cartItem.getQuantity() + request.quantity());
+            log.debug("Cart item updated — productId: {}", request.productId());
         } else {
             cart.getItems().add(new CartItem(cart, product, request.quantity()));
+            log.debug("New item added to cart — productId: {}", request.productId());
         }
         return CartResponse.from(cartRepository.save(cart));
     }
@@ -90,6 +95,8 @@ public class CartService {
 
     @Transactional
     public OrderResponse checkout(Long addressId, User user) {
+        log.info("Checkout initiated — userId: {}, addressId: {}", user.getId(), addressId);
+
         Cart cart = getOrCreateCart(user);
         if (cart.getItems().isEmpty()) {
             throw new BadRequestException("No items to proceed checkout");
@@ -104,6 +111,7 @@ public class CartService {
         OrderResponse order = orderService.createOrder(orderRequest, user);
         // clearing cart after creating order
         clearCart(user);
+        log.info("Checkout complete — userId: {}, orderId: {}", user.getId(), order.id());
         return order;
     }
 }

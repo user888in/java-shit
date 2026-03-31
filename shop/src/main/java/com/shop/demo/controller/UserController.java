@@ -6,6 +6,7 @@ import com.shop.demo.dto.UpdateProfileRequest;
 import com.shop.demo.dto.UserResponse;
 import com.shop.demo.model.User;
 import com.shop.demo.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,12 +27,12 @@ public class UserController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UserResponse> updateMyProfile(@RequestBody UpdateProfileRequest request, @AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<UserResponse> updateMyProfile(@Valid @RequestBody UpdateProfileRequest request, @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(userService.updateProfile(request, currentUser));
     }
 
     @PatchMapping("/me/password")
-    public ResponseEntity<Void> changePassword(@RequestBody ChangePasswordRequest request, @AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<Void> changePassword( @Valid @RequestBody ChangePasswordRequest request, @AuthenticationPrincipal User currentUser) {
         userService.changePassword(request, currentUser);
         return ResponseEntity.noContent().build();
     }

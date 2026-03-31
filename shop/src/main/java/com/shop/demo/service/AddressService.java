@@ -8,6 +8,7 @@ import com.shop.demo.model.Address;
 import com.shop.demo.model.User;
 import com.shop.demo.repository.AddressRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AddressService {
     private final AddressRepository addressRepository;
 
@@ -24,13 +26,6 @@ public class AddressService {
 
     @Transactional
     public AddressResponse addAddress(CreateAddressRequest request, User user) {
-        if (request.fullName() == null || request.fullName().isBlank()) {
-            throw new BadRequestException("Name cannot be blank");
-        } if (request.phone() == null || request.phone().isBlank()) {
-            throw new BadRequestException("Phone cannot be empty");
-        } if (request.pincode() == null || request.pincode().isBlank()) {
-            throw new BadRequestException("pincode cannot be blank");
-        }
         if (request.isDefault()) {
             addressRepository.findByUserAndIsDefaultTrue(user).ifPresent(existing -> {
                 existing.setDefault(false);

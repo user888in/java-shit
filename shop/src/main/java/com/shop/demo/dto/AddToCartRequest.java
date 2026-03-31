@@ -1,5 +1,13 @@
 package com.shop.demo.dto;
 
-public record AddToCartRequest(Long productId, Integer quantity) {
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+public record AddToCartRequest(
+        @NotNull(message = "product id is required")
+        Long productId,
+        @NotNull(message = "quantity is required")
+        @Positive(message = "quantity must be greater than zero")
+        Integer quantity) {
 
 }

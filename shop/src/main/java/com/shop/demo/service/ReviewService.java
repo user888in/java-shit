@@ -10,6 +10,7 @@ import com.shop.demo.model.User;
 import com.shop.demo.repository.ProductRepository;
 import com.shop.demo.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ProductRepository productRepository;
@@ -24,9 +26,6 @@ public class ReviewService {
     @Transactional
     public ReviewResponse createReview(CreateReviewRequest request, User currentUser) {
         Product product = productRepository.findById(request.productId()).orElseThrow(() -> new ResourceNotFoundException("No product found with the id: " + request.productId()));
-        if (request.rating() == null || request.rating() < 1 || request.rating() > 5) {
-            throw new BadRequestException("Invalid rating");
-        }
         if (reviewRepository.existsByUser_IdAndProduct_Id(currentUser.getId(), product.getId())) {
             throw new BadRequestException("Review already exists");
         }

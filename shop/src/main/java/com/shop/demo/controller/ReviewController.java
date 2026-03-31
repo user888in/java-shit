@@ -4,6 +4,7 @@ import com.shop.demo.dto.CreateReviewRequest;
 import com.shop.demo.dto.ReviewResponse;
 import com.shop.demo.model.User;
 import com.shop.demo.service.ReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping
-    public ResponseEntity<ReviewResponse> createReview(@RequestBody CreateReviewRequest request, @AuthenticationPrincipal User user) {
+    public ResponseEntity<ReviewResponse> createReview(@Valid @RequestBody CreateReviewRequest request, @AuthenticationPrincipal User user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.createReview(request, user));
     }
 

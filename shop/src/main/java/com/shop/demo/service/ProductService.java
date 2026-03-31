@@ -10,6 +10,7 @@ import com.shop.demo.model.Product;
 import com.shop.demo.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,22 +23,17 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
 
 
     public ProductResponse createProduct(CreateProductRequest request) {
-        if (request.name() == null || request.name().isBlank()) {
-            throw new BadRequestException("Product name cannot be blank");
-        }
-        if (request.price() == null || request.price() <= 0) {
-            throw new BadRequestException("Price must be greater than zero");
-        }
-        if (request.stockQuantity() == null || request.stockQuantity() < 0) {
-            throw new BadRequestException("Stock cannot be negative");
-        }
+        log.info("Creating product — name: {}", request.name());
         if (productRepository.existsByName(request.name())) {
+            log.warn("Product already exists — name: {}", request.name());
+
             throw new BadRequestException("Product already exists" + request.name());
         }
 
@@ -46,7 +42,9 @@ public class ProductService {
         if (request.categoryId() != null) {
             product.setCategory(categoryService.findCategoryEntityById(request.categoryId()));
         }
-        return ProductResponse.from(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        log.info("Product created — productId: {}, name: {}", saved.getId(), saved.getName());
+        return ProductResponse.from(saved);
     }
 
     public ProductResponse getProduct(Long id) {
@@ -56,6 +54,8 @@ public class ProductService {
 
 
     public PageResponse<ProductResponse> searchProducts(String search, BigDecimal minPrice, BigDecimal maxPrice, Boolean inStock, Long categoryId, int page, int size, String sortBy, String sortDir) {
+        log.debug("Searching products — search: {}, category: {}, page: {}",
+                search, categoryId, page);
         List<String> allowedSortFields = List.of("name", "price", "stockQuantity");
         if (!allowedSortFields.contains(sortBy)) {
             sortBy = "name"; // default fallback
@@ -68,28 +68,41 @@ public class ProductService {
 
     @Transactional
     public Product reserveStock(Long productId, Integer quantity) {
+        log.debug("Reserving stock — productId: {}, qty: {}", productId, quantity);
+
         Product product = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("product not found" + productId));
         if (product.getStockQuantity() < quantity) {
+            log.warn("Insufficient stock — productId: {}, requested: {}, available: {}",
+                    productId, quantity, product.getStockQuantity());
             throw new InsufficientStockException(
                     "Not enough stock for: " + product.getName() + ". Requested: " + quantity + ", Available: " + product.getStockQuantity()
             );
         }
         product.setStockQuantity(product.getStockQuantity() - quantity);
-        return productRepository.save(product);
+        Product saved = productRepository.save(product);
+        log.debug("Stock reserved — productId: {}, remaining: {}", productId, saved.getStockQuantity());
+        return saved;
     }
 
     @Transactional
     public void restoreStock(Long productId, Integer quantity) {
+        log.debug("Restoring stock — productId: {}, qty: {}", productId, quantity);
         Product product = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product not found " + productId));
         product.setStockQuantity(product.getStockQuantity() + quantity);
         productRepository.save(product);
+        log.debug("Stock restored — productId: {}, new stock: {}",
+                productId, product.getStockQuantity());
     }
 
     @Transactional
     public void deleteProduct(Long id) {
+        log.info("Deleting product — productId: {}", id);
+
         if (!productRepository.existsById(id)) {
             throw new ResourceNotFoundException("Product not found: " + id);
         }
         productRepository.deleteById(id);
+        log.info("Product deleted — productId: {}", id);
+
     }
 }
