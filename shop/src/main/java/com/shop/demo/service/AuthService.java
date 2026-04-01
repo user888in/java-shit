@@ -4,6 +4,7 @@ import com.shop.demo.dto.AuthResponse;
 import com.shop.demo.dto.LoginRequest;
 import com.shop.demo.dto.RegisterUserRequest;
 import com.shop.demo.exception.BadRequestException;
+import com.shop.demo.model.RefreshToken;
 import com.shop.demo.model.User;
 import com.shop.demo.repository.UserRepository;
 import com.shop.demo.security.JwtService;
@@ -23,6 +24,7 @@ public class AuthService implements UserDetailsService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public AuthResponse register(RegisterUserRequest request) {
@@ -35,9 +37,11 @@ public class AuthService implements UserDetailsService {
         User user = new User(request.name(), request.email(), hashedPassword);
         User saved = userRepository.save(user);
 
+        String accessToken = jwtService.generateToken(saved.getId(), saved.getEmail(), saved.getRole());
+        String refreshToken = refreshTokenService.createRefreshToken(saved).getToken();
+
         log.info("user registered - userId: {}, email: {}", saved.getId(), saved.getEmail());
-        String token = jwtService.generateToken(saved.getId(), saved.getEmail(), saved.getRole());
-        return new AuthResponse(token, saved.getId(), saved.getName(), saved.getEmail());
+        return new AuthResponse(accessToken, refreshToken, saved.getId(), saved.getName(), saved.getEmail());
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -51,14 +55,29 @@ public class AuthService implements UserDetailsService {
             log.warn("Login failed — wrong password for: {}", request.email());
             throw new BadRequestException("Invalid email or password");
         }
+        String accessToken = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole());
+        String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
         log.info("Login successful — userId: {}, email: {}", user.getId(), user.getEmail());
-        String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole());
-        return new AuthResponse(token, user.getId(), user.getName(), user.getEmail());
+        return new AuthResponse(accessToken, refreshToken, user.getId(), user.getName(), user.getEmail());
     }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+    }
+
+    public AuthResponse refreshAccessToken(String token) {
+        RefreshToken refreshToken = refreshTokenService.verifyRefreshToken(token);
+        User user = refreshToken.getUser();
+        String newAccessToken = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole());
+        log.info("Access token refreshed - userId {}", user.getId());
+        return new AuthResponse(newAccessToken, token, user.getId(), user.getName(), user.getEmail());
+    }
+
+    @Transactional
+    public void logout(User user) {
+        refreshTokenService.deleteByUser(user);
+        log.info("User logged out - userId: {}", user.getId());
     }
 }
