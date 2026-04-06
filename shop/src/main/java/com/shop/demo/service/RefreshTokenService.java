@@ -24,6 +24,7 @@ public class RefreshTokenService {
     @Transactional
     public RefreshToken createRefreshToken(User user) {
         refreshTokenRepository.deleteByUser(user);
+        refreshTokenRepository.flush(); // hibernate keeps the changes in memory but so to avoid conflict in the db flush sends the pending queries to the db instantly
         RefreshToken token = new RefreshToken(user,
                 UUID.randomUUID().toString(), // radom unique string
                 Instant.now().plusMillis(refreshExpiration));

@@ -1,5 +1,6 @@
 package com.shop.demo.config;
 
+import com.shop.demo.filter.RateLimitFilter;
 import com.shop.demo.security.JwtAuthFilter;
 import com.shop.demo.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final RateLimitFilter rateLimitFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws  Exception{
@@ -45,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasAuthority("ROLE_ADMIN")
                         // for other routes token needed
                         .anyRequest().authenticated())
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 // jwt filter should be before security filter
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
