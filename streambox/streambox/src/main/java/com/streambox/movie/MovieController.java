@@ -1,7 +1,9 @@
 package com.streambox.movie;
 
+import com.streambox.common.PageResponse;
 import com.streambox.movie.dto.MovieRequest;
 import com.streambox.movie.dto.MovieResponse;
+import com.streambox.movie.dto.MovieStatsResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,7 +21,7 @@ public class MovieController {
     private final MovieService movieService;
 
     @GetMapping()
-    public Page<MovieResponse> getAll(@PageableDefault(size = 20, sort = "title") Pageable pageable) {
+    public PageResponse<MovieResponse> getAll(@PageableDefault(size = 20, sort = "title") Pageable pageable) {
         return movieService.getAllMovies(pageable);
     }
 
@@ -28,13 +30,18 @@ public class MovieController {
         return movieService.getMovieById(id);
     }
 
+    @GetMapping("/{id}/stats")
+    public MovieStatsResponse getStats(@PathVariable Long id) {
+        return movieService.getStats(id);
+    }
+
     @GetMapping("/genre/{genre}")
-    public Page<MovieResponse> getByGenre(@PathVariable String genre, @PageableDefault(size = 20) Pageable pageable) {
+    public PageResponse<MovieResponse> getByGenre(@PathVariable String genre, @PageableDefault(size = 20) Pageable pageable) {
         return movieService.getByGenre(genre, pageable);
     }
 
     @GetMapping("/top-rated")
-    public Page<MovieResponse> getTopRated(@RequestParam(defaultValue = "7.0") Double minRating, @PageableDefault(size = 20) Pageable pageable) {
+    public PageResponse<MovieResponse> getTopRated(@RequestParam(defaultValue = "7.0") Double minRating, @PageableDefault(size = 20) Pageable pageable) {
         return movieService.getTopRated(minRating, pageable);
     }
 

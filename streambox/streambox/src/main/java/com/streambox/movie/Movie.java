@@ -32,6 +32,10 @@ public class Movie {
     @Column(name = "release_year")
     private Integer releaseYear;
 
+    @Column(name = "view_count", nullable = false)
+    @Builder.Default
+    private Long viewCount = 0L;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

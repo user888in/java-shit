@@ -1,5 +1,6 @@
 package com.streambox.user;
 
+import com.streambox.config.CacheNames;
 import com.streambox.exception.ResourceNotFoundException;
 import com.streambox.movie.Movie;
 import com.streambox.movie.MovieMapper;
@@ -7,6 +8,8 @@ import com.streambox.movie.MovieRepository;
 import com.streambox.movie.dto.MovieResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,12 +25,15 @@ public class WatchlistService {
     private final MovieRepository movieRepository;
     private final MovieMapper movieMapper;
 
+    @Cacheable(value = CacheNames.WATCHLIST, key = "#userId")
     public Set<MovieResponse> getWatchlist(Long userId) {
+        log.debug("Cache MISS — fetching watchlist for user {} from DB", userId);
         User user = userRepository.findByIdWithWatchlist(userId).orElseThrow(() -> new ResourceNotFoundException("User", userId));
         return user.getWatchlist().stream().map(movieMapper::toResponse).collect(Collectors.toSet());
     }
 
     @Transactional
+    @CacheEvict(value = CacheNames.WATCHLIST, key = "#userId")
     public void addToWatchlist(Long userId, Long movieId) {
         User user = userRepository.findByIdWithWatchlist(userId).orElseThrow(() -> new ResourceNotFoundException("User", userId));
         Movie movie = movieRepository.findById(movieId).orElseThrow(() -> new ResourceNotFoundException("Movie", movieId));
@@ -39,6 +45,7 @@ public class WatchlistService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheNames.WATCHLIST, key = "#userId")
     public void removeFromWatchlist(Long userId, Long movieId) {
         User user = userRepository.findByIdWithWatchlist(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));

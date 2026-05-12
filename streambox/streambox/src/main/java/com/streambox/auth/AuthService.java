@@ -3,6 +3,8 @@ package com.streambox.auth;
 import com.streambox.auth.dto.AuthResponse;
 import com.streambox.auth.dto.LoginRequest;
 import com.streambox.auth.dto.RegisterRequest;
+import com.streambox.event.EventProducer;
+import com.streambox.event.UserRegisteredEvent;
 import com.streambox.exception.ResourceNotFoundException;
 import com.streambox.user.Role;
 import com.streambox.user.User;
@@ -28,6 +30,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final EventProducer eventProducer;
 
     @Value("${app.jwt.refresh-token-expiry}")
     private long refreshTokenExpiry;
@@ -47,6 +50,15 @@ public class AuthService {
                 .role(Role.USER)
                 .build();
         userRepository.save(user);
+        eventProducer.publishUserRegistered(
+                UserRegisteredEvent.builder()
+                        .userId(user.getId())
+                        .email(user.getEmail())
+                        .username(user.getUsername())
+                        .occurredAt(LocalDateTime.now())
+                        .build()
+        );
+
         log.info("Registered new user: {}", user.getEmail());
         return issueTokens(user);
     }
