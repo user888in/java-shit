@@ -6,6 +6,8 @@ import com.streambox.exception.ResourceNotFoundException;
 import com.streambox.movie.dto.MovieRequest;
 import com.streambox.movie.dto.MovieResponse;
 import com.streambox.movie.dto.MovieStatsResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,18 +30,31 @@ public class MovieService {
     private final MovieMapper movieMapper;
     private final RedisTemplate<String, Object> redisTemplate;
 
+    @CircuitBreaker(name = "redis-cache", fallbackMethod = "getAllMoviesFallback")
     @Cacheable(value = CacheNames.MOVIES, key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public PageResponse<MovieResponse> getAllMovies(Pageable pageable) {
         log.debug("Cache MISS — fetching all movies from DB");
         return PageResponse.from(movieRepository.findAll(pageable).map(movieMapper::toResponse));
     }
 
+    public PageResponse<MovieResponse> getAllMoviesFallback(Pageable pageable, Throwable ex) {
+        log.warn("Redis circuit open - serving getAllMovies from DB directly. reason ={} ", ex.getMessage());
+        return PageResponse.from(movieRepository.findAll(pageable).map(movieMapper::toResponse));
+    }
+
+    @CircuitBreaker(name = "redis-cache",fallbackMethod = "getMovieByIdFallback")
     @Cacheable(value = CacheNames.MOVIE, key = "#id")
     public MovieResponse getMovieById(Long id) {
         log.debug("Cache MISS — fetching movie {} from DB", id);
         return movieRepository.findById(id).map(movieMapper::toResponse).orElseThrow(() -> new ResourceNotFoundException("Movie", id));
     }
 
+    public MovieResponse getMovieByIdFallback(Long id, Throwable ex) {
+        log.warn("Redis circuit open — serving getById from DB. movieId={} reason={}", id, ex.getMessage());
+        return movieRepository.findById(id).map(movieMapper::toResponse).orElseThrow(() -> new ResourceNotFoundException("Movie", id));
+    }
+
+    @CircuitBreaker(name = "redis-cache", fallbackMethod = "getByGenreFallback")
     @Cacheable(value = CacheNames.MOVIES,
             key = "#genre + '-' + #pageable.pageNumber")
     public PageResponse<MovieResponse> getByGenre(String genre, Pageable pageable) {
@@ -49,13 +64,27 @@ public class MovieService {
         );
     }
 
+    public PageResponse<MovieResponse> getByGenreFallback(String genre, Pageable pageable, Throwable ex) {
+        log.warn("Redis circuit open — serving getByGenre from DB. genre={} reason={}", genre, ex.getMessage());
+        return PageResponse.from(
+                movieRepository.findByGenreIgnoreCase(genre, pageable).map(movieMapper::toResponse)
+        );
+    }
+
+    @CircuitBreaker(name = "redis-cache", fallbackMethod = "getTopRatedFallback")
     @Cacheable(value = CacheNames.TOP_RATED, key = "#minRating + '-' + #pageable.pageNumber")
     public PageResponse<MovieResponse> getTopRated(Double minRating, Pageable pageable) {
         log.debug("Cache MISS — fetching top rated from DB");
         return PageResponse.from(movieRepository.findTopRated(minRating, pageable).map(movieMapper::toResponse));
     }
 
+    public PageResponse<MovieResponse> getTopRatedFallback(Double minRating, Pageable pageable, Throwable ex) {
+        log.warn("Redis circuit open — serving topRated from DB. reason={}", ex.getMessage());
+        return PageResponse.from(movieRepository.findTopRated(minRating, pageable).map(movieMapper::toResponse));
+    }
+
     @Transactional
+    @Retry(name = "db-retry")
     @Caching(evict = {
             @CacheEvict(value = CacheNames.MOVIES, allEntries = true),
             @CacheEvict(value = CacheNames.TOP_RATED, allEntries = true)
@@ -69,7 +98,9 @@ public class MovieService {
         return movieMapper.toResponse(saved);
     }
 
+
     @Transactional
+    @Retry(name = "db-retry")
     @Caching(evict = {
             @CacheEvict(value = CacheNames.MOVIE, key = "#id"),
             @CacheEvict(value = CacheNames.MOVIES, allEntries = true),
@@ -90,7 +121,7 @@ public class MovieService {
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = CacheNames.MOVIE, key = "id"),
+            @CacheEvict(value = CacheNames.MOVIE, key = "#id"),
             @CacheEvict(value = CacheNames.MOVIES, allEntries = true),
             @CacheEvict(value = CacheNames.TOP_RATED, allEntries = true)
     })
@@ -103,13 +134,23 @@ public class MovieService {
     }
 
     public MovieStatsResponse getStats(Long movieId) {
-        Object count = redisTemplate.opsForValue().get("movie:views:" + movieId);
-        long viewCount = 0L;
-        if (count != null) {
-            viewCount = Long.parseLong(count.toString());
-        }else{
-            viewCount = movieRepository.findById(movieId).map(Movie::getViewCount).orElseThrow(() -> new ResourceNotFoundException("Movie", movieId));
+        long redisCount = 0L;
+        try {
+            Object count = redisTemplate.opsForValue().get("movie:views:" + movieId);
+            if (count != null) {
+                redisCount = Long.parseLong(count.toString());
+            }
+        } catch (Exception ex) {
+            log.warn("Redis unavailable for stats lookup. movieId={} reason={}", movieId, ex.getMessage());
         }
-        return MovieStatsResponse.builder().movieId(movieId).viewCount(viewCount).build();
+
+        long dbCount = movieRepository.findById(movieId)
+                .map(Movie::getViewCount)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie", movieId));
+
+        return MovieStatsResponse.builder()
+                .movieId(movieId)
+                .viewCount(dbCount + redisCount)
+                .build();
     }
 }

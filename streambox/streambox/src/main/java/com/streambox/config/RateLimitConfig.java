@@ -3,39 +3,32 @@ package com.streambox.config;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import io.github.bucket4j.redis.lettuce.cas.LettuceBasedProxyManager;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
 @Configuration
 public class RateLimitConfig {
-    @Value("${spring.data.redis.host}")
-    private String redisHost;
-    @Value("${spring.data.redis.port}")
-    private int redisPort;
 
     @Bean
-    public RedisClient redisClient() {
-        return RedisClient.create(
-                RedisURI.builder().withHost(redisHost).withPort(redisPort).build()
-        );
+    public StatefulRedisConnection<String, byte[]> rateLimitRedisConnection(
+            LettuceConnectionFactory lettuceConnectionFactory) {
+        // getNativeClient() returns AbstractRedisClient — must cast to RedisClient
+        // to access connect(RedisCodec)
+        RedisClient redisClient = (RedisClient) lettuceConnectionFactory.getNativeClient();
+        return redisClient
+                .connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE));
     }
 
     @Bean
-    public StatefulRedisConnection<String, byte[]> redisConnection(RedisClient redisClient) {
-        return redisClient.connect(
-                RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE)
-        );
+    public ProxyManager<String> bucketProxyManager(
+            StatefulRedisConnection<String, byte[]> rateLimitRedisConnection) {
+        return LettuceBasedProxyManager
+                .builderFor(rateLimitRedisConnection)
+                .build();
     }
-
-    @Bean
-    public ProxyManager<String> bucketProxyManager(StatefulRedisConnection<String, byte[]> redisConnection) {
-        return LettuceBasedProxyManager.builderFor(redisConnection).build();
-    }
-
 }

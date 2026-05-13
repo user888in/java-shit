@@ -17,8 +17,8 @@ public class ViewCountSyncJob {
     private final RedisTemplate<String, Object> redisTemplate;
     private final MovieRepository movieRepository;
 
-    private static final String VIEW_COUNT_PATTERN = "movies:views:*";
-    private static final String VIEW_COUNT_PREFIX = "movie:views";
+    private static final String VIEW_COUNT_PATTERN = "movie:views:*";
+    private static final String VIEW_COUNT_PREFIX = "movie:views:";
 
     @Scheduled(fixedDelay = 300000)
     @Transactional

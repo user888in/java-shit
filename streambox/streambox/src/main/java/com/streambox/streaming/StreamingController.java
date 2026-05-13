@@ -3,6 +3,7 @@ package com.streambox.streaming;
 import com.streambox.event.EventProducer;
 import com.streambox.event.MovieWatchedEvent;
 import com.streambox.user.User;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class StreamingController {
 
     @PostMapping("/{movieId}/progress")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Bulkhead(name = "streaming", fallbackMethod = "progressFallback")
     public void updateProgress(@PathVariable Long movieId, @Valid @RequestBody WatchProgressRequest request, @AuthenticationPrincipal User currentUser) {
         eventProducer.publishMovieWatched(
                 MovieWatchedEvent.builder()
@@ -32,5 +34,10 @@ public class StreamingController {
                         .build()
         );
 
+    }
+
+    public void progressFallback(Long movieId, WatchProgressRequest request, User currentUser, Throwable ex) {
+        log.warn("Bulkhead full — dropping progress update userId={} movieId={}",
+                currentUser.getId(), movieId);
     }
 }
