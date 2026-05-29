@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: dropbox-clone
+
+  # ── Database ──
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:dropbox}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:postgres}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  # ── JPA ──
+  jpa:
+    hibernate:
+      ddl-auto: validate        # Flyway owns schema. JPA only checks entities match it.
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 50        # Batch inserts (useful for chunk records)
+
+  # ── Flyway ──
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  # ── Jackson ──
+  jackson:
+    default-property-inclusion: non_null        # Don't serialize null fields
+    serialization:
+      write-dates-as-timestamps: false          # Dates as ISO-8601 strings
+
+# ── AWS ──
+aws:
+  region: ${AWS_REGION:us-east-1}
+  s3:
+    bucket-name: ${S3_BUCKET:dropbox-clone-files}
+    presigned-url-expiry-minutes: 15
+    multipart-threshold-mb: 100               # Files above 100MB → multipart flow
+    chunk-size-mb: 10
+  cloudfront:
+    distribution-domain: ${CF_DOMAIN:}
+    key-pair-id: ${CF_KEY_PAIR_ID:}
+    private-key-path: ${CF_PRIVATE_KEY_PATH:}
+    signed-url-expiry-minutes: 5
+
+# ── JWT ──
+security:
+  jwt:
+    secret: ${JWT_SECRET:change-this-in-production-must-be-256-bits-minimum}
+    expiry-hours: 24
+
+# ── Server ──
+server:
+  port: 8080
+
+# ── Logging ──
+logging:
+  level:
+    com.dropbox.clone: DEBUG
+    software.amazon.awssdk: WARN
