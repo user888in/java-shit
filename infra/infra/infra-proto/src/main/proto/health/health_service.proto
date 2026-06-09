@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package infra.health.v1;
+
+option java_package = "com.infra.health.v1";
+option java_outer_classname = "HealthServiceProto";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "common/common.proto";
+
+// ── Messages ────────────────────────────────────────────
+
+message RegisterServiceRequest {
+  infra.common.v1.ServiceInfo service = 1;
+  int32 heartbeat_interval_seconds = 2;  // how often this service will ping
+}
+
+message RegisterServiceResponse {
+  string registration_id = 1;
+  infra.common.v1.ResponseMeta meta = 2;
+}
+
+message HeartbeatRequest {
+  string registration_id = 1;
+  ServiceHealthStatus status = 2;
+  double cpu_percent = 3;
+  double memory_percent = 4;
+  int64  active_connections = 5;
+  google.protobuf.Timestamp sent_at = 6;
+}
+
+message HeartbeatResponse {
+  bool acknowledged = 1;
+  infra.common.v1.ResponseMeta meta = 2;
+}
+
+message StreamHeartbeatsRequest {
+  string service_id = 1;   // stream heartbeats for this specific service
+  int32  last_n = 2;       // optionally replay last N before streaming live
+}
+
+message HeartbeatEvent {
+  string service_id = 1;
+  ServiceHealthStatus status = 2;
+  double cpu_percent = 3;
+  double memory_percent = 4;
+  int64  active_connections = 5;
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+message GetServiceStatusRequest {
+  string service_id = 1;
+}
+
+message ServiceStatusResponse {
+  infra.common.v1.ServiceInfo service = 1;
+  ServiceHealthStatus status = 2;
+  HeartbeatEvent last_heartbeat = 3;
+  int32 missed_heartbeats = 4;
+  infra.common.v1.ResponseMeta meta = 5;
+}
+
+enum ServiceHealthStatus {
+  SERVICE_HEALTH_STATUS_UNSPECIFIED = 0;
+  SERVICE_HEALTH_STATUS_HEALTHY = 1;
+  SERVICE_HEALTH_STATUS_DEGRADED = 2;
+  SERVICE_HEALTH_STATUS_DOWN = 3;
+  SERVICE_HEALTH_STATUS_UNKNOWN = 4;
+}
+
+// ── Service ─────────────────────────────────────────────
+
+service HealthService {
+  // Unary — register a service for monitoring
+  rpc RegisterService (RegisterServiceRequest) returns (RegisterServiceResponse);
+
+  // Unary — send a single heartbeat ping
+  rpc SendHeartbeat (HeartbeatRequest) returns (HeartbeatResponse);
+
+  // Server streaming — stream live heartbeat events to caller
+  rpc StreamHeartbeats (StreamHeartbeatsRequest) returns (stream HeartbeatEvent);
+
+  // Unary — get current health status of a service
+  rpc GetServiceStatus (GetServiceStatusRequest) returns (ServiceStatusResponse);
+
+  // Unary — deregister a service
+  rpc DeregisterService (GetServiceStatusRequest) returns (google.protobuf.Empty);
+}

@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package infra.common.v1;
+
+option java_package = "com.infra.common.v1";
+option java_outer_classname = "CommonProto";
+option  java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+
+message ServiceInfo {
+  string service_id = 1;
+  string name = 2;
+  string host = 3;
+  int32 port = 4;
+  string version = 5;
+  map<string,string> tags = 6;
+  google.protobuf.Timestamp registered_at = 7;
+}
+
+message ResponseMeta {
+  string request_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string server_id = 3;
+}
+
+enum Environment{
+  ENVIRONMENT_UNSPECIFIED = 0;
+  ENVIRONMENT_DEV = 1;
+  ENVIRONMENT_STAGING = 2;
+  ENVIRONMENT_PROD = 3;
+
+}

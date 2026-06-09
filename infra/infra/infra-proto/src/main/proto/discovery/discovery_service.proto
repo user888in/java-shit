@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package infra.discovery.v1;
+
+option java_package = "com.infra.discovery.v1";
+option java_outer_classname = "DiscoveryServiceProto";
+option java_multiple_files = true;
+
+import "google/protobuf/empty.proto";
+import "common/common.proto";
+
+message RegisterRequest {
+  infra.common.v1.ServiceInfo service = 1;
+  int32 ttl_seconds = 2;    // Redis TTL — if no renewal, entry expires
+}
+
+message RegisterResponse {
+  string lease_id = 1;      // returned to client for renewals
+  infra.common.v1.ResponseMeta meta = 2;
+}
+
+message RenewLeaseRequest {
+  string lease_id = 1;
+}
+
+message LookupRequest {
+  string name = 1;          // look up by service name
+}
+
+message LookupResponse {
+  repeated infra.common.v1.ServiceInfo instances = 1;  // all instances of that service
+  infra.common.v1.ResponseMeta meta = 2;
+}
+
+message ListAllResponse {
+  repeated infra.common.v1.ServiceInfo services = 1;
+  infra.common.v1.ResponseMeta meta = 2;
+}
+
+service DiscoveryService {
+  // Register a service instance (stores in Redis with TTL)
+  rpc Register (RegisterRequest) returns (RegisterResponse);
+
+  // Renew a lease to prevent TTL expiry
+  rpc RenewLease (RenewLeaseRequest) returns (google.protobuf.Empty);
+
+  // Look up all instances of a service by name
+  rpc Lookup (LookupRequest) returns (LookupResponse);
+
+  // List every registered service
+  rpc ListAll (google.protobuf.Empty) returns (ListAllResponse);
+
+  // Deregister explicitly
+  rpc Deregister (RenewLeaseRequest) returns (google.protobuf.Empty);
+}

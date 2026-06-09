@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SSE Test</title>
+</head>
+<body>
+<h2>Notifications for: <span id="uid"></span></h2>
+<div id="feed" style="font-family: monospace; padding: 10px;"></div>
+
+<script>
+    const userId = 'alice';
+    document.getElementById('uid').textContent = userId;
+
+    const es = new EventSource(`http://localhost:8080/api/stream/${userId}`);
+
+    // Fires for default events (no event: field)
+    es.onmessage = (e) => addToFeed('DEFAULT', e.data);
+
+    // Fires only for event:CONNECTED
+    es.addEventListener('CONNECTED', (e) => addToFeed('CONNECTED', e.data));
+
+    // Fires only for event:NEW_LEAD
+    es.addEventListener('NEW_LEAD', (e) => {
+      const data = JSON.parse(e.data);
+      addToFeed('NEW_LEAD', data.message);
+    });
+
+    // Fires only for event:ALERT
+    es.addEventListener('ALERT', (e) => {
+      const data = JSON.parse(e.data);
+      addToFeed('ALERT', data.message);
+    });
+
+    es.onerror = () => addToFeed('ERROR', 'Connection lost — browser will retry...');
+
+    function addToFeed(type, message) {
+      const div = document.createElement('div');
+      div.style.padding = '8px 0';
+      div.style.borderBottom = '1px solid #eee';
+      div.innerHTML = `<strong>${type}</strong>: ${message} <span style="color:#999; font-size:12px">${new Date().toLocaleTimeString()}</span>`;
+      document.getElementById('feed').prepend(div);
+    }
+</script>
+</body>
+</html>

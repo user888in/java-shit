@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package infra.deploy.v1;
+
+option java_package = "com.infra.deploy.v1";
+option java_outer_classname = "DeployServiceProto";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "common/common.proto";
+
+message CreateDeploymentRequest {
+  string service_id = 1;
+  string image_tag = 2;          // e.g. "payment-service:v2.1.0"
+  infra.common.v1.Environment environment = 3;
+  map<string, string> env_vars = 4;
+  int32 replicas = 5;
+}
+
+message CreateDeploymentResponse {
+  string deployment_id = 1;
+  DeploymentStatus status = 2;
+  infra.common.v1.ResponseMeta meta = 3;
+}
+
+message DeployLogLine {
+  string deployment_id = 1;
+  string line = 2;
+  LogLevel level = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+message DeployLogSummary {
+  string deployment_id = 1;
+  int32  total_lines = 2;
+  bool   success = 3;
+  string final_message = 4;
+  google.protobuf.Timestamp completed_at = 5;
+}
+
+message RollbackRequest {
+  string deployment_id = 1;    // deployment to roll back to
+  string reason = 2;
+}
+
+message RollbackResponse {
+  string new_deployment_id = 1;
+  DeploymentStatus status = 2;
+  infra.common.v1.ResponseMeta meta = 3;
+}
+
+message GetDeploymentRequest {
+  string deployment_id = 1;
+}
+
+message DeploymentRecord {
+  string deployment_id = 1;
+  string service_id = 2;
+  string image_tag = 3;
+  infra.common.v1.Environment environment = 4;
+  DeploymentStatus status = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp completed_at = 7;
+}
+
+enum DeploymentStatus {
+  DEPLOYMENT_STATUS_UNSPECIFIED = 0;
+  DEPLOYMENT_STATUS_PENDING = 1;
+  DEPLOYMENT_STATUS_RUNNING = 2;
+  DEPLOYMENT_STATUS_SUCCESS = 3;
+  DEPLOYMENT_STATUS_FAILED = 4;
+  DEPLOYMENT_STATUS_ROLLED_BACK = 5;
+}
+
+enum LogLevel {
+  LOG_LEVEL_UNSPECIFIED = 0;
+  LOG_LEVEL_DEBUG = 1;
+  LOG_LEVEL_INFO = 2;
+  LOG_LEVEL_WARN = 3;
+  LOG_LEVEL_ERROR = 4;
+}
+
+service DeployService {
+  // Unary — create a new deployment
+  rpc CreateDeployment (CreateDeploymentRequest) returns (CreateDeploymentResponse);
+
+  // Client streaming — push deploy log lines from a CI runner to the server
+  rpc PushDeployLogs (stream DeployLogLine) returns (DeployLogSummary);
+
+  // Unary — trigger rollback
+  rpc Rollback (RollbackRequest) returns (RollbackResponse);
+
+  // Unary — get a deployment record
+  rpc GetDeployment (GetDeploymentRequest) returns (DeploymentRecord);
+}

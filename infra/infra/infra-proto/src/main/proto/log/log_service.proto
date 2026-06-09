@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package infra.log.v1;
+
+option java_package = "com.infra.log.v1";
+option java_outer_classname = "LogServiceProto";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "common/common.proto";
+
+message LogEntry {
+  string log_id = 1;
+  string service_id = 2;
+  string message = 3;
+  LogSeverity severity = 4;
+  map<string, string> fields = 5;   // structured fields e.g. trace_id, user_id
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+message LogFilter {
+  string service_id = 1;
+  LogSeverity min_severity = 2;
+  google.protobuf.Timestamp from = 3;
+  google.protobuf.Timestamp to = 4;
+  string contains = 5;              // text search
+}
+
+enum LogSeverity {
+  LOG_SEVERITY_UNSPECIFIED = 0;
+  LOG_SEVERITY_DEBUG = 1;
+  LOG_SEVERITY_INFO = 2;
+  LOG_SEVERITY_WARN = 3;
+  LOG_SEVERITY_ERROR = 4;
+  LOG_SEVERITY_FATAL = 5;
+}
+
+service LogService {
+  // Bidirectional streaming
+  // Client streams LogEntry messages in (ingestion)
+  // Server streams matching LogEntry messages back out (tailing/filtering)
+  rpc StreamLogs (stream LogEntry) returns (stream LogEntry);
+}

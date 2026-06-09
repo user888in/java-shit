@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: sse
+  mvc:
+    async:
+      request-timeout: -1
+server:
+  port: 8080
