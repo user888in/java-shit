@@ -43,6 +43,11 @@ public class UserService {
         return new AuthResponse(accessToken, refreshToken, user.getEmail());
     }
 
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+    }
+
     public User findOrCreateSocialUser(String email, String name, String provider, String providerId) {
         // Try to find existing user by email (for account linking)
         Optional<User> optionalUser = userRepository.findByEmail(email);

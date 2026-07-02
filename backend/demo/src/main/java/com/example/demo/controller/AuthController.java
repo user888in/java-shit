@@ -6,6 +6,7 @@ import com.example.demo.dto.response.AuthResponse;
 import com.example.demo.dto.response.UserResponse;
 import com.example.demo.model.User;
 import com.example.demo.service.UserService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,8 +31,9 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public UserResponse me() {
-        User user = userService.getCurrentUser();
+    public UserResponse me(Authentication authentication) {
+        String email = authentication.getName();
+        User user = userService.findByEmail(email);
         return toUserResponse(user);
     }
 
