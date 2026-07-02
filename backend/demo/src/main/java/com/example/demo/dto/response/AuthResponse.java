@@ -1,20 +1,37 @@
 package com.example.demo.dto.response;
 
 public class AuthResponse {
-    private String token;
+    private String accessToken;
+    private String refreshToken;
     private String email;
 
-    public AuthResponse(String token, String email) {
-        this.token = token;
+    public AuthResponse(String accessToken, String refreshToken, String email) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
         this.email = email;
     }
 
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
     public String getEmail() {
-        return this.email;
+        return email;
     }
 
-    public String getToken() {
-        return this.token;
+    public void setEmail(String email) {
+        this.email = email;
     }
-
 }

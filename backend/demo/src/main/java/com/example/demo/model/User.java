@@ -18,6 +18,13 @@ public class User {
     private String role;
     private boolean active;
 
+    // New fields for social login
+    @Column(name = "provider", length = 20)
+    private String provider; // e.g., "google", "github", or null for email/password
+
+    @Column(name = "provider_id", length = 100)
+    private String providerId; // ID from the provider
+
     public User() {
     }
 
@@ -67,5 +74,21 @@ public class User {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
+
+    public String getProviderId() {
+        return providerId;
+    }
+
+    public void setProviderId(String providerId) {
+        this.providerId = providerId;
     }
 }
