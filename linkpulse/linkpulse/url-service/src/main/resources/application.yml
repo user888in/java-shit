@@ -1,0 +1,51 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: url-service
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:linkpulse_urls}
+    username: ${DB_USER:linkpulse}
+    password: ${DB_PASSWORD:linkpulse}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 3000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # Flyway owns the schema, Hibernate must never auto-create/alter it
+    open-in-view: false     # avoid the lazy-loading-in-controller anti-pattern
+    properties:
+      hibernate:
+        format_sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+linkpulse:
+  base-url: ${SHORT_URL_BASE:http://localhost:8082}   # redirect-service's public base URL
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.linkpulse: INFO

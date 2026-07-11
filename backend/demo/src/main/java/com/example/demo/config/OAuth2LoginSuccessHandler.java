@@ -1,9 +1,11 @@
 package com.example.demo.config;
 
+import com.example.demo.model.User;
 import com.example.demo.service.JwtService;
 import com.example.demo.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -50,11 +52,19 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String accessToken = jwtService.generateAccessToken(user.getEmail());
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
-        // Build response (same format as /login endpoint)
-        var authResponse = new com.example.demo.dto.response.AuthResponse(accessToken, refreshToken, user.getEmail());
-        response.setContentType("application/json");
-        response.getCharacterEncoding();
-        objectMapper.writeValue(response.getWriter(), authResponse);
+        // Set tokens in cookies (non-HttpOnly so frontend can read them)
+        Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(24 * 60 * 60); // 24 hours
+        response.addCookie(accessTokenCookie);
+
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+        response.addCookie(refreshTokenCookie);
+
+        // Redirect to the frontend (index.html)
+        response.sendRedirect("/");
     }
 
     private String extractProviderId(org.springframework.security.oauth2.core.user.OAuth2User oAuth2User, String registrationId) {

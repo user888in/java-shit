@@ -1,0 +1,33 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: redirect-service
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+linkpulse:
+  url-service:
+    base-url: ${URL_SERVICE_BASE:http://localhost:8081}
+  kafka:
+    click-events-topic: ${CLICK_EVENTS_TOPIC:click-events}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.linkpulse: INFO

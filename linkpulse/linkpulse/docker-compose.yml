@@ -1,0 +1,209 @@
+version: "3.9"
+
+services:
+
+  # ================= API GATEWAY =================
+  api-gateway:
+    build: ./api-gateway
+    container_name: linkpulse-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-1234567890123456}
+      AUTH_SERVICE_URL: http://auth-service:8084
+      URL_SERVICE_URL: http://url-service:8081
+      ANALYTICS_SERVICE_URL: http://analytics-service:8083
+      REDIRECT_SERVICE_URL: http://redirect-service:8082
+    depends_on:
+      - auth-service
+      - url-service
+      - analytics-service
+      - redirect-service
+    networks:
+      - linkpulse-net
+
+  # ================= URL SERVICE =================
+  url-service:
+    build: ./url-service
+    container_name: linkpulse-url-service
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: url-postgres
+      DB_PORT: 5432
+      DB_NAME: linkpulse_urls
+      DB_USER: linkpulse
+      DB_PASSWORD: linkpulse
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SHORT_URL_BASE: http://localhost:8082
+    depends_on:
+      url-postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - linkpulse-net
+
+  url-postgres:
+    image: postgres:16-alpine
+    container_name: linkpulse-url-postgres
+    environment:
+      POSTGRES_DB: linkpulse_urls
+      POSTGRES_USER: linkpulse
+      POSTGRES_PASSWORD: linkpulse
+    ports:
+      - "5433:5432"
+    volumes:
+      - url_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linkpulse -d linkpulse_urls"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - linkpulse-net
+
+  # ================= REDIRECT SERVICE =================
+  redirect-service:
+    build: ./redirect-service
+    container_name: linkpulse-redirect-service
+    ports:
+      - "8082:8082"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      URL_SERVICE_BASE: http://url-service:8081
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      CLICK_EVENTS_TOPIC: click-events
+    depends_on:
+      - url-service
+      - redis
+      - kafka
+    networks:
+      - linkpulse-net
+
+  # ================= ANALYTICS SERVICE =================
+  analytics-service:
+    build: ./analytics-service
+    container_name: linkpulse-analytics-service
+    ports:
+      - "8083:8083"
+    environment:
+      DB_HOST: analytics-postgres
+      DB_PORT: 5432
+      DB_NAME: linkpulse_analytics
+      DB_USER: linkpulse
+      DB_PASSWORD: linkpulse
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      CLICK_EVENTS_TOPIC: click-events
+    depends_on:
+      analytics-postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - linkpulse-net
+
+  analytics-postgres:
+    image: postgres:16-alpine
+    container_name: linkpulse-analytics-postgres
+    environment:
+      POSTGRES_DB: linkpulse_analytics
+      POSTGRES_USER: linkpulse
+      POSTGRES_PASSWORD: linkpulse
+    ports:
+      - "5434:5432"
+    volumes:
+      - analytics_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linkpulse -d linkpulse_analytics"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - linkpulse-net
+
+  # ================= AUTH SERVICE =================
+  auth-service:
+    build: ./auth-service
+    container_name: linkpulse-auth-service
+    ports:
+      - "8084:8084"
+    environment:
+      DB_HOST: auth-postgres
+      DB_PORT: 5432
+      DB_NAME: linkpulse_auth
+      DB_USER: linkpulse
+      DB_PASSWORD: linkpulse
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-1234567890123456}
+      ACCESS_TOKEN_TTL: 900
+      REFRESH_TOKEN_TTL: 604800
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - linkpulse-net
+
+  auth-postgres:
+    image: postgres:16-alpine
+    container_name: linkpulse-auth-postgres
+    environment:
+      POSTGRES_DB: linkpulse_auth
+      POSTGRES_USER: linkpulse
+      POSTGRES_PASSWORD: linkpulse
+    ports:
+      - "5435:5432"
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linkpulse -d linkpulse_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - linkpulse-net
+
+  # ================= SHARED REDIS =================
+  redis:
+    image: redis:7-alpine
+    container_name: linkpulse-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - linkpulse-net
+
+  # ================= KAFKA (KRaft mode - no Zookeeper needed) =================
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: linkpulse-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      CLUSTER_ID: "linkpulse-kafka-cluster-01"
+    networks:
+      - linkpulse-net
+
+volumes:
+  url_postgres_data:
+  analytics_postgres_data:
+  auth_postgres_data:
+
+networks:
+  linkpulse-net:
+    driver: bridge

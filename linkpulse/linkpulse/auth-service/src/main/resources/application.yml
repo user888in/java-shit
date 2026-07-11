@@ -1,0 +1,49 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:linkpulse_auth}
+    username: ${DB_USER:linkpulse}
+    password: ${DB_PASSWORD:linkpulse}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+linkpulse:
+  jwt:
+    # MUST be overridden via env var in any real deployment - this default is
+    # for local dev only and must never be used in staging/prod.
+    secret: ${JWT_SECRET:dev-only-secret-change-me-1234567890123456}
+    access-token-ttl-seconds: ${ACCESS_TOKEN_TTL:900}       # 15 minutes
+    refresh-token-ttl-seconds: ${REFRESH_TOKEN_TTL:604800}  # 7 days
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.linkpulse: INFO

@@ -1,9 +1,9 @@
 package com.example.demo.config;
 
-import com.example.demo.config.OAuth2LoginSuccessHandler;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.JwtService;
 import com.example.demo.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,12 +24,10 @@ import java.util.Collections;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final UserService userService;
     private final UserRepository userRepository;
     private final JwtService jwtService;
 
-    public SecurityConfig(UserService userService, UserRepository userRepository, JwtService jwtService) {
-        this.userService = userService;
+    public SecurityConfig(UserRepository userRepository, JwtService jwtService) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
     }
@@ -43,7 +41,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
-                .successHandler(oAuth2LoginSuccessHandler())
+                .successHandler(oAuth2LoginSuccessHandler(null)) // Will be overridden by the bean method below
             )
             .userDetailsService(userDetailsService());
 
@@ -51,8 +49,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler() {
-        return new OAuth2LoginSuccessHandler(userService, jwtService, new com.fasterxml.jackson.databind.ObjectMapper());
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
+
+    @Bean
+    public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler(UserService userService) {
+        return new OAuth2LoginSuccessHandler(userService, jwtService, objectMapper());
     }
 
     @Bean
@@ -63,10 +66,10 @@ public class SecurityConfig {
                             .withUsername(u.getEmail())
                             .password(u.getPassword()) // This is the encoded password
                             .authorities("ROLE_" + u.getRole())
-                            .accountIsExpired(false)
-                            .accountIsLocked(false)
-                            .credentialsIsExpired(false)
-                            .isActive(u.isActive())
+                            .accountExpired(false)
+                            .accountLocked(false)
+                            .credentialsExpired(false)
+                            .disabled(!u.isActive())
                             .build())
                     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
             return user;

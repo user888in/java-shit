@@ -1,0 +1,104 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  cloud:
+    gateway:
+      routes:
+
+        # ---------- AUTH SERVICE ----------
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5      # 5 req/sec sustained
+                redis-rate-limiter.burstCapacity: 10      # allow short bursts
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: authServiceCB
+                fallbackUri: forward:/fallback/auth-service
+
+        # ---------- URL SERVICE (requires JWT) ----------
+        - id: url-service
+          uri: ${URL_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/urls/**
+          filters:
+            - name: JwtAuthentication
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: urlServiceCB
+                fallbackUri: forward:/fallback/url-service
+
+        # ---------- ANALYTICS SERVICE (requires JWT) ----------
+        - id: analytics-service
+          uri: ${ANALYTICS_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/analytics/**
+          filters:
+            - name: JwtAuthentication
+            - name: CircuitBreaker
+              args:
+                name: analyticsServiceCB
+                fallbackUri: forward:/fallback/analytics-service
+
+        # ---------- REDIRECT SERVICE (catch-all, public, lowest priority) ----------
+        - id: redirect-service
+          uri: ${REDIRECT_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/**
+          order: 100
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: redirectServiceCB
+                fallbackUri: forward:/fallback/redirect-service
+
+linkpulse:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-secret-change-me-1234567890123456}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        registerHealthIndicator: true
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 4s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,gateway
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.linkpulse: INFO
+    org.springframework.cloud.gateway: INFO

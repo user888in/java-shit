@@ -1,0 +1,167 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+/* Tab styling */
+.tab {
+    overflow: hidden;
+    border-bottom: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+
+.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 17px;
+}
+
+.tab button:hover {
+    background-color: #ddd;
+}
+
+.tab button.active {
+    background-color: #ccc;
+}
+
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border-top: none;
+}
+
+/* Form styling */
+form {
+    max-width: 400px;
+    margin: 20px auto;
+}
+
+form h2 {
+    text-align: center;
+    color: #555;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button#google-login-btn,
+button#github-login-btn {
+    background-color: #4285F4;
+    margin: 10px 0;
+}
+
+button#google-login-btn:hover {
+    background-color: #3367D6;
+}
+
+button#github-login-btn {
+    background-color: #24292e;
+}
+
+button#github-login-btn:hover {
+    background-color: #1c1f23;
+}
+
+/* Logged-in UI */
+#logged-in-ui {
+    margin-top: 30px;
+}
+
+.user-profile {
+    background: #e8f5e9;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.user-profile h2 {
+    margin-top: 0;
+}
+
+.products-section h2 {
+    margin-top: 0;
+}
+
+#products-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+#products-list li {
+    background: #f1f8e9;
+    margin: 8px 0;
+    padding: 12px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#logout-btn {
+    background-color: #f44336;
+}
+
+#logout-btn:hover {
+    background-color: #d32f2f;
+}
+
+/* Messages */
+#message {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 4px;
+}
+#message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+#message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
